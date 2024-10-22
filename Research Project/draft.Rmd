@@ -14,44 +14,14 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(data.table)
 library(mice)
+library(GGally)
+library(lubridate)
 
 ```
 
-
-# Proposal
-
-Research Proposal
-RESEARCH QUESTION
-This study seeks to answer the question: What effect does the addition of new bike lanes have on the number of bike users, car users, and pedestrian accidents in an urban area? 
-HYPOTHESIS
-The hypothesis is that the addition of new bike lanes will lead to an increase in bike users, a decrease in car users, and a reduction in pedestrian accidents. Furthermore, these changes are expected to contribute to reduced congestion, which could provide economic benefits similar to those outlined by Hartgen & Fields (2009), who found that reducing congestion enhances regional productivity.
-IMPORTANCE AND SIGNIFICANCE
-As urbanization continues to rise, cities are grappling with increased traffic congestion and its negative consequences on economic productivity, environmental sustainability, and public safety. Hartgen and Fields (2009) found that reducing congestion by improving travel speeds could increase regional productivity by up to 1%, translating to billions of dollars in economic benefits for cities. Research by Prud’homme and Lee (1999) also highlights that cities with commute times of less than 30 minutes tend to experience significant productivity gains. Therefore, the importance of this research lies in its potential to inform city planners and policymakers on whether bike lanes can serve as a viable tool for reducing traffic congestion and enhancing urban economic growth.
-This research will also assess the practical benefits of bike lanes beyond financial considerations. A well-designed bike lane network can decrease pedestrian accidents by streamlining traffic flows and reducing interactions between cars and pedestrians. Moreover, a reduction in car use can lower congestion, reduce travel times for all road users, and minimize harmful carbon emissions. By promoting cycling over driving, cities may improve not only environmental sustainability but also economic vitality by reducing gridlock, as shown in the Hartgen & Fields study.
-Ultimately, this study will help cities balance the immediate costs of bike lane construction, including the financial and other implications of removing car lanes and parking spots, with the long-term benefits of improved safety, reduced commute times, and enhanced economic productivity.
-PRIOR RESEARCH
-Previous studies examining the impact of bike lanes on urban transportation have produced mixed results. Some research suggests that bike lanes lead to increased cycling and reduced car usage, while other studies indicate that the impact is minimal. For instance, Hwang et al. (2023) used simulated data and found a significant increase in non-motorized transportation methods, including other methods such as public transit and walking, but did not observe a specific increase in biking. Similarly, Buck et al. (2011) found a significant correlation between bike lanes and the proximity of bike share stations.
-Hartgen and Fields (2009) found that reducing traffic congestion can lead to a 1% increase in regional productivity if travel speeds improve by just 10%. This provides an economic rationale for infrastructure investments that reduce congestion, including bike lanes, as they may contribute to free-flowing traffic and improve access to employment and commercial centers. Additionally, Prud’homme and Lee (1999) demonstrated that reducing commute times to less than 30 minutes can significantly boost economic productivity. By improving commuting efficiency, particularly for those traveling by bike, bike lanes could play a crucial role in optimizing urban productivity. This study will assess whether bike lanes can help cities achieve these economic benefits by alleviating gridlock and improving commute times.
-Importantly, there is a notable lack of comprehensive research on how bike lanes affect pedestrian accidents. This study aims to fill this gap by providing a holistic view of the impact of bike lanes on urban transportation dynamics, considering not only bike and car usage but also pedestrian safety and overall traffic patterns.
-Furthermore, many previous studies have focused on a single city, making it challenging to determine whether observed relationships are inherent to the variables being studied or are influenced by the specific environment. By expanding the research to multiple cities, this study aims to achieve more reliable and generalizable results. This multi-city approach will help to identify consistent patterns and provide a broader understanding of the impact of bike lanes.
-A further limitation of prior studies was often focusing on the growth in bike ridership instead of the decrease, or smaller increase, in car ridership. While predicting the total increase in bike ridership is useful for many instances, understanding the specific number of bike riders who otherwise would have been car users is also crucial. This study will address this aspect, providing valuable insights into how bike lanes can effectively reduce car usage and contribute to sustainable urban transportation.
-METHODOLOGY
-Data Collection
-To analyze the impact of bike lanes, data will be collected from various sources across at least three of the following cities: New York City, San Francisco, Portland, Washington DC, and Chicago. The decision on which cities to use will hinge on the reliability of the data being sourced from each of them.
-Data for these cities will be sourced from a variety of open-source materials. The bike share networks in these cities, all operated by Lyft, contain valuable bike usage data. Bike lane and vehicle traffic count data can be found on these cities’ respective open data platforms. Pedestrian accident information can be sourced from Vision Zero in the respective city. 
-Variables
-The primary variables being analyzed will be total footage of bike lanes, bike usage count, motor vehicle usage count, and pedestrian accident count. Additionally, weather and population density data will be incorporated into the analysis to control for those factors. 
-Data Analysis
-Several potential analytical approaches are being considered, depending on data availability and the dataset’s structure. Generalized Linear Models (GLMs) like Poisson or Negative Binomial regression will be explored for count-based dependent variables such as bike users, car users, and pedestrian accidents. These models can incorporate multiple control variables, such as population density and weather conditions. Panel Data Regression will also be considered, as the dataset spans multiple cities and years. This method can account for both within-city changes over time and differences between cities, helping to isolate the effect of new bike lanes from other city-specific or time-specific factors.
-For cities with granular, time-based data, Time Series Analysis will be explored to analyze trends over time and detect shifts in the number of bike users, car users, and pedestrian accidents following the introduction of new bike lanes. Additionally, a Difference-in-Differences (DiD) approach will be used if a suitable control group can be identified. This method compares changes in outcomes between areas with new bike lanes and those without, before and after the intervention, helping to establish a causal relationship.
-These methods are preliminary considerations and will be refined as the research progresses. Depending on the quality of the data and the availability of comparable control groups, certain models may prove more suitable than others. The final selection of statistical and machine learning methods will be based on what best captures the effects of bike lanes on urban transportation patterns while accounting for potential confounding variables.
-EXPECTED OUTCOMES
-The addition of bike lanes is expected to yield several positive outcomes. First, an increase in bike users is anticipated as safer, dedicated lanes encourage more people to choose cycling over driving. This shift should correspond with a decrease in car users, reducing traffic congestion and contributing to lower emissions. Additionally, the introduction of bike lanes is predicted to result in fewer pedestrian accidents, as more organized street designs separate different types of traffic, leading to improved overall safety.
-Quantifying these changes will provide urban planners and policymakers with actionable data, enabling them to make informed decisions about future transportation infrastructure. Beyond encouraging sustainable transportation, the insights gained could help cities create safer, more efficient transit environments, while also addressing broader environmental goals. Ultimately, these findings will support the development of cities that prioritize both public safety and ecological sustainability.
-
 # Data Collection
 
-## NYC Data
+## Read Datasets
 
 ```{r}
 nyc_data <- fread("C:\\Users\\shaya\\OneDrive\\Documents\\repos\\Data698\\Research Project\\nyc_dataset.csv")
@@ -150,13 +120,12 @@ print(missing_values)
 
 ```{r}
 # Make line plots for all variables
-nyc_data %>% 
-
-  gather(key = "variable", value = "value", -month_year) %>% 
-  ggplot(aes(x = month_year, y = value, color = variable)) + 
-  geom_line() + 
-  facet_wrap(~ variable, scales = "free_y") + 
-  labs(title = "NYC Data Over Time", x = "Month", y = "Value") + 
+nyc_data %>%
+  gather(key = "variable", value = "value", -month_year) %>%
+  ggplot(aes(x = month_year, y = value, color = variable)) +
+  geom_line() +
+  facet_wrap(~ variable, scales = "free_y") +
+  labs(title = "NYC Data Over Time", x = "Month", y = "Value") +
   theme_minimal()
 ```
 
@@ -183,18 +152,15 @@ nyc_data %>%
 ```
 
 ```{r}
-library(ggplot2)
-library(GGally)
-
 # Select the relevant columns and compute the correlation matrix
 cor_data <- nyc_data %>% 
   select(smoothed_volume, citi_bike_count, Total_Injured, total_length_feet, biking_proportion)
 
 # Create the correlation plot using ggcorplot
-ggcorr(cor_data, 
-       label = TRUE, 
-       label_round = 2, 
-       label_size = 4, 
+ggcorr(cor_data,
+       label = TRUE,
+       label_round = 2,
+       label_size = 4,
        colors = c("blue", "white", "red"),
        title = "Correlation Matrix Heatmap") +
   theme_minimal() +
@@ -212,12 +178,12 @@ cor(cor_data, use = "pairwise.complete.obs")
 ```{r}
 # Create the new dataframe with the selected columns and rename them
 selected_data_nyc <- nyc_data %>%
-select(
-    date = month_year, 
-    mv_traffic = smoothed_volume, 
-    bike_lane_addition = total_length_feet, 
-    bike_count = citi_bike_count, 
-    accidents_count = Total_Injured, 
+  select(
+    date = month_year,
+    mv_traffic = smoothed_volume,
+    bike_lane_addition = total_length_feet,
+    bike_count = citi_bike_count,
+    accidents_count = Total_Injured,
     total_killed = Total_Killed
   )
 
@@ -257,18 +223,15 @@ selected_data_nyc$mv_traffic <- ts(selected_data_nyc$mv_traffic, frequency = 12,
 decomposed_bike_count <- stl(selected_data_nyc$bike_count, s.window = "periodic")
 decomposed_mv_traffic <- stl(selected_data_nyc$mv_traffic, s.window = "periodic")
 
-# Recreate the bike_to_traffic_ratio with the decomposed values
-selected_data_nyc$bike_to_traffic_ratio_decomposed <- decomposed_bike_count$time.series[, "seasonal"] / decomposed_mv_traffic$time.series[, "seasonal"]
-
 # Display the first few rows of the updated dataframe
 head(selected_data_nyc)
 ```
 
 ```{r}
-# Plot the decomposed bike_to_traffic_ratio over time
+# Plot the bike_to_traffic_ratio over time
 ggplot(selected_data_nyc, aes(x = date, y = bike_to_traffic_ratio)) +
   geom_line() +
-  labs(title = "Decomposed Bike to Traffic Ratio Over Time", x = "Date", y = "Bike to Traffic Ratio (Decomposed)") +
+  labs(title = "Decomposed Bike to Traffic Ratio Over Time", x = "Date", y = "Bike to Traffic Ratio") +
   theme_minimal()
 ``` 
 
@@ -307,32 +270,32 @@ summary(model_exp)
 model_logistic <- nls(cumulative_bike_lane ~ SSlogis(trend_nyc, Asym, xmid, scal), data = selected_data_nyc)
 summary(model_logistic)
 
-ggplot(selected_data_nyc, aes(x = trend_nyc, y = cumulative_bike_lane)) + 
-  geom_point() + 
-  #geom_smooth(method = "lm", formula = y ~ x, se = FALSE, col = "blue") + 
+ggplot(selected_data_nyc, aes(x = trend_nyc, y = cumulative_bike_lane)) +
+  geom_point() +
+  #geom_smooth(method = "lm", formula = y ~ x, se = FALSE, col = "blue") +
   geom_smooth(method = "lm", formula = y ~ log(x + 1), se = FALSE, col = "red") + 
   #geom_smooth(method = "lm", formula = y ~ exp(x), se = FALSE, col = "green") + 
-  geom_line(aes(y = fitted(model_logistic)), col = "purple") + 
+  geom_line(aes(y = fitted(model_logistic)), col = "purple") +
   labs(title = "Model Fits: Logarithmic, Logistic",
-       x = "Trend of Bike to Traffic Ratio", 
-       y = "Cumulative Bike Lane Additions") + 
+       x = "Trend of Bike to Traffic Ratio",
+       y = "Cumulative Bike Lane Additions") +
   theme_minimal() +
-  #scale_color_manual(values = c("blue", "red", "green", "purple"), 
+  #scale_color_manual(values = c("blue", "red", "green", "purple"),
   #                   labels = c("Linear", "Log", "Exponential", "Logistic")) +
   theme(legend.position = "bottom")
 ``` 
 
 ```{r}
-ggplot(selected_data_nyc, aes(x = trend, y = cumulative_bike_lane)) + 
-  geom_point(aes(color = "Actual Ratio")) + 
+ggplot(selected_data_nyc, aes(x = trend, y = cumulative_bike_lane)) +
+  geom_point(aes(color = "Actual Ratio")) +
   geom_smooth(method = "lm", formula = y ~ log(x + 1), se = FALSE, aes(color = "Logarithmic")) + 
-  geom_line(aes(y = fitted(model_logistic), color = "Logistic")) + 
+  geom_line(aes(y = fitted(model_logistic), color = "Logistic")) +
   labs(title = "NYC Model Fits: Logarithmic, Logistic",
-       y = "Total Amount of Bike Lanes", 
-       x = "Trend of Bike to Traffic Ratio") + 
-  theme_minimal() + 
-  scale_color_manual(values = c("black", "red", "purple"), 
-                     labels = c("Actual Ratio", "Logarithmic", "Logistic")) + 
+       y = "Total Amount of Bike Lanes",
+       x = "Trend of Bike to Traffic Ratio") +
+  theme_minimal() +
+  scale_color_manual(values = c("black", "red", "purple"),
+                     labels = c("Actual Ratio", "Logarithmic", "Logistic")) +
   theme(
     legend.position = c(0.78, 0.17),
     plot.title = element_text(size = 30),
@@ -343,7 +306,7 @@ ggplot(selected_data_nyc, aes(x = trend, y = cumulative_bike_lane)) +
     axis.text.x = element_blank(),
     axis.text.y = element_blank(),
     axis.ticks = element_blank()
-  )    
+  )
 ```
 
 The logistic model seems to be the best fit for the data. The pattern of the trend of cumulative bike lane additions against the trend of bike to traffic ratio is similar to a logistic curve, indicating that there may be a saturation point for bike lane additions beyond which the bike to traffic ratio does not increase significantly. However, while a typical logistic curve has a carrying capacity, after which the curve completely flattens out, the data seems to retain a very slight upward trend even after the inflection point. This suggests that the relationship between bike lane additions and the bike to traffic ratio may be more complex than a simple logistic curve can capture. We will keep this as a potential model but explore adding more complexity as well. Additionally, we will consider a logarithmic model as it fits the model reasonable well and also keeps the positive trend after the inflection point.
@@ -389,16 +352,13 @@ print(missing_values)
 
 ```{r}
 # Print the rows with missing values in any column or a 0 in bay_wheels_count
-sf_data_filtered <- sf_data_complete %>% 
+sf_data_filtered <- sf_data_complete %>%
   filter(if_any(everything(), is.na) | bay_wheels_count == 0)
 
 print(sf_data_filtered)
 ```  
 
 ```{r}
-library(dplyr)
-library(lubridate)
-
 # Convert Month column to Date format
 sf_data <- sf_data %>%
   mutate(Month = ymd(paste0(Month, "-01")))
@@ -439,7 +399,7 @@ print(missing_values)
 # Create a new dataframe with the selected columns and rename them
 selected_data_sf <- sf_data_imputed %>%
   select(
-    date = Month, 
+    date = Month,
     mv_traffic = Total_Volume_ADT,
     bike_lane_addition = total_length_feet,
     bike_count = bay_wheels_count,
@@ -529,17 +489,17 @@ library(gridExtra)
 
 # Create the individual plots
 plot_sf <- ggplot(selected_data_sf, aes(x = trend_sf, y = cumulative_bike_lane)) + 
-  geom_point() + 
+  geom_point() +
   labs(title = "SF: Trend of Bike to Traffic Ratio vs. Trend of Cumulative Bike Lane Additions",
-       x = "Trend of Bike to Traffic Ratio", 
-       y = "Trend of Cumulative Bike Lane Additions") + 
+       x = "Trend of Bike to Traffic Ratio",
+       y = "Trend of Cumulative Bike Lane Additions") +
   theme_minimal()
 
 plot_nyc <- ggplot(selected_data_nyc, aes(x = trend_nyc, y = cumulative_bike_lane)) + 
-  geom_point() + 
+  geom_point() +
   labs(title = "NYC: Trend of Bike to Traffic Ratio vs. Trend of Cumulative Bike Lane Additions",
-       x = "Trend of Bike to Traffic Ratio", 
-       y = "Trend of Cumulative Bike Lane Additions") + 
+       x = "Trend of Bike to Traffic Ratio",
+       y = "Trend of Cumulative Bike Lane Additions") +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5))
 
@@ -557,25 +517,25 @@ summary(model_log_sf)
 model_exp_sf <- lm(log(cumulative_bike_lane + 1) ~ trend_sf, data = selected_data_sf)
 summary(model_exp_sf)
 
-model_logistic_sf <- nls(cumulative_bike_lane ~ SSlogis(trend_sf, Asym, xmid, scal), 
-                          data = selected_data_sf, 
-                          start = list(Asym = max(selected_data_sf$cumulative_bike_lane) * 1.1, 
-                                       xmid = 4, 
+model_logistic_sf <- nls(cumulative_bike_lane ~ SSlogis(trend_sf, Asym, xmid, scal),
+                         data = selected_data_sf,
+                          start = list(Asym = max(selected_data_sf$cumulative_bike_lane) * 1.1,
+                                       xmid = 4,
                                        scal = 0.5))
 summary(model_logistic_sf)
 ```
 
 ```{r}
-ggplot(selected_data_sf, aes(x = trend_sf, y = cumulative_bike_lane)) + 
-  geom_point(aes(color = "Actual Ratio")) + 
-  geom_smooth(method = "lm", formula = y ~ log(x + 1), se = FALSE, aes(color = "Logarithmic")) + 
-  geom_line(aes(y = fitted(model_logistic_sf), color = "Logistic")) + 
+ggplot(selected_data_sf, aes(x = trend_sf, y = cumulative_bike_lane)) +
+  geom_point(aes(color = "Actual Ratio")) +
+  geom_smooth(method = "lm", formula = y ~ log(x + 1), se = FALSE, aes(color = "Logarithmic")) +
+  geom_line(aes(y = fitted(model_logistic_sf), color = "Logistic")) +
   labs(title = "SF Model Fits: Logarithmic, Logistic",
-       x = "Trend of Bike to Traffic Ratio", 
-       y = "Trend of Cumulative Bike Lane Additions") + 
-  theme_minimal() + 
-  scale_color_manual(values = c("black", "red", "purple"), 
-                     labels = c("Actual Ratio", "Logarithmic", "Logistic")) + 
+       x = "Trend of Bike to Traffic Ratio",
+       y = "Trend of Cumulative Bike Lane Additions") +
+  theme_minimal() +
+  scale_color_manual(values = c("black", "red", "purple"),
+                     labels = c("Actual Ratio", "Logarithmic", "Logistic")) +
   theme(
     legend.position = c(0.78, 0.17),
     plot.title = element_text(size = 30),
@@ -594,7 +554,6 @@ The San Fracisco data is a smaller dataset than the NYC data, but it shows a sim
 ## Analyze total accidetnts and total killed relative to bike to traffic ratio
 
 ```{r}
-# Redo with the original monthly data
 # Create a new column with the combined injuries and deaths
 nyc_data_temp <- nyc_data %>%
   mutate(total_injuries_deaths = Total_Injured + 5*Total_Killed)
@@ -607,11 +566,11 @@ ggplot(nyc_data_temp, aes(x = trend_nyc, y = total_injuries_deaths)) +
 ```  
 
 ```{r}
-nyc_data_temp <- nyc_data_temp %>% 
+nyc_data_temp <- nyc_data_temp %>%
   rename(date = month_year)
 
 # Now you can perform the join
-selected_data_nyc <- selected_data_nyc %>% 
+selected_data_nyc <- selected_data_nyc %>%
   left_join(nyc_data_temp, by = "date")
 ```  
 
