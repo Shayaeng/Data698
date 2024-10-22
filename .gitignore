@@ -50,3 +50,8 @@ rsconnect/
 
 # Ignore temp folder
 temp/
+
+# Ignore specific project data folders
+Research Project/Data/Chicago/Divvy/
+Research Project/Data/NYC/Citi Bike/
+Research Project/Data/San Francisco/Bay 
